@@ -7,22 +7,22 @@
 #########################################################
 
 ###################################################
-# Subtitles:									  #
-#												  #
-# BIN -> the name of the executable.			  #
-# CFLAGS -> the list of flags you want.			  #
+# Subtitles:                                      #
+#                                                 #
+# BIN -> the name of the executable.              #
+# CFLAGS -> the list of flags you want.           #
 # FINALDIR -> the name of the directory that will #
-# 			  be compressed in .tar.			  #
-# TARF -> the name of the .tar file.			  #
-# TEX -> the name of the .tex file.				  #
-#												  #
+#             be compressed in .tar.              #
+# TARF -> the name of the .tar file.              #
+# TEX -> the name of the .tex file.               #
+#                                                 #
 ###################################################
 
-BIN 	 := 
-TARF	 := 
-TEX 	 := 
+BIN      := 
+TARF     := 
+TEX      := 
 FINALDIR :=
-CFLAGS 	 := 
+CFLAGS   := 
 
 CC  := gcc
 RM  := rm -f
@@ -49,50 +49,50 @@ all: $(BINDIR)/$(BIN)
 # build rules
 
 $(BINDIR)/$(BIN): $(OBJ) | $(BINDIR)
-	$(CC) $(CFLAGS) -o $@ $^
+    $(CC) $(CFLAGS) -o $@ $^
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
+    $(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCDIR)/%.h | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
+    $(CC) $(CFLAGS) -c -o $@ $<
 
 # directory creation rules
 $(OBJDIR) $(BINDIR) $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR):
-	mkdir -p $@
+    mkdir -p $@
 
 # phony targets for automation
 .PHONY: init
 init: | $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR)
-	git init
+    git init
 
 .PHONY: clean
 clean:
-	$(RM) $(OBJDIR)/*.o
-	$(RM) $(LTXDIR)/*.dvi
-	$(RM) $(LTXDIR)/*.aux
-	$(RM) $(LTXDIR)/*.log
+    $(RM) $(OBJDIR)/*.o
+    $(RM) $(LTXDIR)/*.dvi
+    $(RM) $(LTXDIR)/*.aux
+    $(RM) $(LTXDIR)/*.log
 
 .PHONY: latex
 latex:
-	pdflatex $(LTXDIR)/$(TEX)
+    pdflatex $(LTXDIR)/$(TEX)
 
 .PHONY: organize
 organize:
-	-$(MV) *.o $(OBJDIR)
-	-$(MV) *.c $(SRCDIR)
-	-$(MV) *.h $(INCDIR)
-	-$(MV) *.txt $(TXTDIR)
-	-$(MV) *.dvi $(LTXDIR)
-	-$(MV) *.aux $(LTXDIR)
-	-$(MV) *.tex $(LTXDIR)
-	-$(MV) *.pdf $(LTXDIR)
-	-$(MV) *.log $(LTXDIR)
+    -$(MV) *.o $(OBJDIR)
+    -$(MV) *.c $(SRCDIR)
+    -$(MV) *.h $(INCDIR)
+    -$(MV) *.txt $(TXTDIR)
+    -$(MV) *.dvi $(LTXDIR)
+    -$(MV) *.aux $(LTXDIR)
+    -$(MV) *.tex $(LTXDIR)
+    -$(MV) *.pdf $(LTXDIR)
+    -$(MV) *.log $(LTXDIR)
 
 .PHONY: tar
 tar: | $(FINALDIR)
-	$(CP) $(SRCDIR) $(FINALDIR)
-	$(CP) $(LTXDIR) $(FINALDIR)
-	$(CP) $(INCDIR) $(FINALDIR)
-	$(CP) Makefile $(FINALDIR)
-	$(TAR) $(TARF).tar $(FINALDIR)
+    $(CP) $(SRCDIR) $(FINALDIR)
+    $(CP) $(LTXDIR) $(FINALDIR)
+    $(CP) $(INCDIR) $(FINALDIR)
+    $(CP) Makefile $(FINALDIR)
+    $(TAR) $(TARF).tar $(FINALDIR)
