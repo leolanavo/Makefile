@@ -21,7 +21,7 @@
 BIN      := 
 TARF     := 
 TEX      := 
-FINALDIR :=
+FINALDIR := 
 CFLAGS   := 
 
 CC  := gcc
@@ -47,7 +47,6 @@ OBJ := $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRC))
 all: $(BINDIR)/$(BIN)
 
 # build rules
-
 $(BINDIR)/$(BIN): $(OBJ) | $(BINDIR)
 	$(CC) $(CFLAGS) -o $@ $^
 
@@ -58,13 +57,20 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCDIR)/%.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # directory creation rules
-$(OBJDIR) $(BINDIR) $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR):
+$(OBJDIR) $(BINDIR) $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR) $(FINALDIR):
 	mkdir -p $@
 
 # phony targets for automation
 .PHONY: init
 init: | $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR)
 	git init
+	echo $(OBJDIR)/* $(TXTDIR)/* $(FINALDIR) > .gitignore
+	git add $(SRCDIR)
+	git add $(INCDIR)
+	git add $(LTXDIR)
+	git add .gitignore
+	git add Makefile
+	git commit -m "Initial commit"
 
 .PHONY: clean
 clean:
@@ -96,3 +102,8 @@ tar: | $(FINALDIR)
 	$(CP) $(INCDIR) $(FINALDIR)
 	$(CP) Makefile $(FINALDIR)
 	$(TAR) $(TARF).tar $(FINALDIR)
+
+.PHONY: upload
+	git add --all
+	git commit -m "Upload all the files"
+	git push origin master
