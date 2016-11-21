@@ -48,13 +48,13 @@ all: $(BINDIR)/$(BIN)
 
 # build rules
 $(BINDIR)/$(BIN): $(OBJ) | $(BINDIR)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ 
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $< -I$(INCDIR)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCDIR)/%.h | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $< -I$(INCDIR)
 
 # directory creation rules
 $(OBJDIR) $(BINDIR) $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR) $(FINALDIR):
@@ -104,6 +104,7 @@ tar: | $(FINALDIR)
 	$(TAR) $(TARF).tar $(FINALDIR)
 
 .PHONY: upload
+git:
 	git add --all
 	git commit -m "Upload all the files"
 	git push origin master
