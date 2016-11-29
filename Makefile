@@ -18,7 +18,7 @@
 #                                                 #
 ###################################################
 
-BIN      := 
+BIN      :=  
 TARF     := 
 TEX      := 
 FINALDIR := 
@@ -27,7 +27,7 @@ CFLAGS   :=
 CC  := gcc
 RM  := rm -f
 MV  := mv
-CP  := cp
+CP  := cp -r
 TAR := tar -cvf 
 
 OBJDIR := obj
@@ -48,13 +48,13 @@ all: $(BINDIR)/$(BIN)
 
 # build rules
 $(BINDIR)/$(BIN): $(OBJ) | $(BINDIR)
-	$(CC) $(CFLAGS) -o $@ $^ 
+	$(CC) $(CFLAGS) -o $@ $^
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $< -I$(INCDIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCDIR)/%.h | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $< -I$(INCDIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 # directory creation rules
 $(OBJDIR) $(BINDIR) $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR) $(FINALDIR):
@@ -64,13 +64,40 @@ $(OBJDIR) $(BINDIR) $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR) $(FINALDIR):
 .PHONY: init
 init: | $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR)
 	git init
-	echo $(OBJDIR)/* $(TXTDIR)/* $(FINALDIR) > .gitignore
+	echo $(OBJDIR) > .gitignore
+	echo $(TXTDIR) >> .gitignore
+	echo $(FINALDIR) >> .gitignore
+	echo $(BIN) >> .gitignore
+	echo $(LTXDIR)/*.log >> .gitignore
+	echo $(LTXDIR)/*.dvi >> .gitignore
+	echo $(LTXDIR)/*.aux >> .gitignore
 	git add $(SRCDIR)
 	git add $(INCDIR)
 	git add $(LTXDIR)
 	git add .gitignore
 	git add Makefile
 	git commit -m "Initial commit"
+
+.PHONY: template
+template:
+	touch $(LTXDIR)/$(TEX)
+	echo '\\documentclass[a4paper, 12pt]{article}' > $(LTXDIR)/$(TEX)
+	echo '\\usepackage[brazilian]{babel}' >> $(LTXDIR)/$(TEX)
+	echo '\\usepackage[utf8]{inputenc}' >> $(LTXDIR)/$(TEX)
+	echo '\\usepackage[T1]{fontenc}' >> $(LTXDIR)/$(TEX)
+	echo '\\usepackage[a4paper]{geometry}' >> $(LTXDIR)/$(TEX)
+	echo '\\usepackage{amsmath}' >> $(LTXDIR)/$(TEX)
+	echo '\\usepackage{amssymb}' >> $(LTXDIR)/$(TEX)
+	echo '\\usepackage{indentfirst}' >> $(LTXDIR)/$(TEX)
+	echo '' >> $(LTXDIR)/$(TEX)
+	echo '\\title{}' >> $(LTXDIR)/$(TEX)
+	echo '\\author{}' >> $(LTXDIR)/$(TEX)
+	echo '\\date{}' >> $(LTXDIR)/$(TEX)
+	echo '' >> $(LTXDIR)/$(TEX)
+	echo '\\begin{document}' >> $(LTXDIR)/$(TEX)
+	echo '\\maketitle' >> $(LTXDIR)/$(TEX)
+	echo '' >> $(LTXDIR)/$(TEX)
+	echo '\\end{document}' >> $(LTXDIR)/$(TEX)
 
 .PHONY: clean
 clean:
@@ -99,12 +126,15 @@ organize:
 tar: | $(FINALDIR)
 	$(CP) $(SRCDIR) $(FINALDIR)
 	$(CP) $(LTXDIR) $(FINALDIR)
+	$(RM) $(FINALDIR)/$(LTXDIR)/*.dvi
+	$(RM) $(FINALDIR)/$(LTXDIR)/*.aux
+	$(RM) $(FINALDIR)/$(LTXDIR)/*.log
+	$(RM) $(FINALDIR)/$(LTXDIR)/*.tex
 	$(CP) $(INCDIR) $(FINALDIR)
 	$(CP) Makefile $(FINALDIR)
 	$(TAR) $(TARF).tar $(FINALDIR)
 
 .PHONY: upload
-git:
 	git add --all
 	git commit -m "Upload all the files"
 	git push origin master
