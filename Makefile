@@ -1,5 +1,7 @@
-# A simple Makefile to automate work.
-# By: Leonardo Lana
+#######################################
+# A simple Makefile to automate work. #
+# By: Leonardo Lana                   #
+#######################################
 
 #########################################################
 # Quick tip: when you start a project, enter its folder #
@@ -14,128 +16,110 @@
 # FINALDIR -> the name of the directory that will #
 #             be compressed in .tar.              #
 # TARF -> the name of the .tar file.              #
-# TEX -> the name of the .tex file.               #
 #                                                 #
 ###################################################
 
-BIN      :=  
-TARF     := 
-TEX      := 
-FINALDIR := 
-CFLAGS   := 
+BIN   	  := 
+TARF      := 
+FINALDIR  := 
 
-CC  := gcc
-RM  := rm -f
-MV  := mv
-CP  := cp -r
-TAR := tar -cvf 
+CFLAGS    := -Wall -std=c11 -lreadline
+EXECFLAGS := -O2
+TESTFLAGS := -g
 
-OBJDIR := obj
+CC    := gcc
+MV    := mv
+RM    := rm -f
+RMDIR := rm -rf
+CP    := cp -r
+ECHO  := echo -e
+MKDIR := mkdir -p
+TAR   := tar -cvf
+
+BINDIR := bin
 SRCDIR := src
-BINDIR := .
-INCDIR := include
+OBJDIR := build
+TSTDIR := test
 TXTDIR := txt
+INCDIR := include
 LTXDIR := report
-
-#This will add any .c in the src directory 
-#file to the list of compilation.
-SRC := $(wildcard $(SRCDIR)/*.c)
-OBJ := $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRC))
+ROOT := $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR) \
+        $(FINALDIR) $(BINDIR) $(TSTDIR) $(OBJDIR)
+BINROOT := $(foreach r,$(INCDIR) $(SRCDIR) $(OBJDIR),$(foreach b,$(BIN),$r/$b))
 
 # main target
 .PHONY: all
-all: $(BINDIR)/$(BIN)
-
-# build rules
-$(BINDIR)/$(BIN): $(OBJ) | $(BINDIR)
-	$(CC) $(CFLAGS) -o $@ $^
-
-$(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCDIR)/%.h | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-# directory creation rules
-$(OBJDIR) $(BINDIR) $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR) $(FINALDIR):
-	mkdir -p $@
+all: CFLAGS += $(EXECFLAGS)
+all: $(addprefix $(BINDIR)/,$(BIN))
 
 .PHONY: debug
+debug: CFLAGS += $(TESTFLAGS)
+debug: $(addprefix $(TSTDIR)/,$(BIN))
+
+# Create the necessary lists of dependencies for each binary
+define create_vars
+$(eval $1.SRC := $(strip $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/$1/*.c)))
+$(eval $1.OBJ := $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $($1.SRC)))
+$(eval $1.INC := $(strip $(wildcard $(INCDIR)/*.h) $(wildcard $(INCDIR)/$1/*.h)))
+endef
+$(foreach x,$(BIN),$(call create_vars,$x))
+
+# Compile each one of the binaries
+define bin-factory
+$$(BINDIR)/$1: $$($1.OBJ) | $$(BINDIR)
+	$$(CC) $$(CFLAGS) -o $$@ $$^
+endef
+$(foreach x,$(BIN),$(eval $(call bin-factory,$x)))
+
+define test-factory
+$$(TSTDIR)/$1: $$($1.OBJ) | $$(TSTDIR)
+	$$(CC) $$(CFLAGS) -o $$@ $$^
+endef
+$(foreach x,$(BIN),$(eval $(call test-factory,$x)))
+
+define object-factory
+$$(OBJDIR)/$1.o: $$(SRCDIR)/$1.c $$(wildcard $$(INCDIR)/$1.h) | $$(OBJDIR) $$(BINROOT)
+	$$(CC) $$(CFLAGS) -c -o $$@ $$<
+endef
+$(foreach b,$(BIN),\
+	$(foreach obj,$($b.OBJ),\
+		$(eval $(call object-factory,$(patsubst $(OBJDIR)/%.o,%,$(obj))))))
+
+# Directory creation rules
+$(ROOT) $(BINROOT):
+	@$(MKDIR) $@
+
 # phony targets for automation
 .PHONY: init
-init: | $(SRCDIR) $(INCDIR) $(LTXDIR) $(TXTDIR)
-	git init
-	echo $(OBJDIR) > .gitignore
-	echo $(TXTDIR) >> .gitignore
-	echo $(FINALDIR) >> .gitignore
-	echo $(BIN) >> .gitignore
-	echo $(LTXDIR)/*.log >> .gitignore
-	echo $(LTXDIR)/*.dvi >> .gitignore
-	echo $(LTXDIR)/*.aux >> .gitignore
-	git add $(SRCDIR)
-	git add $(INCDIR)
-	git add $(LTXDIR)
-	git add .gitignore
-	git add Makefile
-	git commit -m "Initial commit"
-
-.PHONY: template
-template:
-	touch $(LTXDIR)/$(TEX)
-	echo '\\documentclass[a4paper, 12pt]{article}' > $(LTXDIR)/$(TEX)
-	echo '\\usepackage[brazilian]{babel}' >> $(LTXDIR)/$(TEX)
-	echo '\\usepackage[utf8]{inputenc}' >> $(LTXDIR)/$(TEX)
-	echo '\\usepackage[T1]{fontenc}' >> $(LTXDIR)/$(TEX)
-	echo '\\usepackage[a4paper]{geometry}' >> $(LTXDIR)/$(TEX)
-	echo '\\usepackage{amsmath}' >> $(LTXDIR)/$(TEX)
-	echo '\\usepackage{amssymb}' >> $(LTXDIR)/$(TEX)
-	echo '\\usepackage{indentfirst}' >> $(LTXDIR)/$(TEX)
-	echo '' >> $(LTXDIR)/$(TEX)
-	echo '\\title{}' >> $(LTXDIR)/$(TEX)
-	echo '\\author{}' >> $(LTXDIR)/$(TEX)
-	echo '\\date{}' >> $(LTXDIR)/$(TEX)
-	echo '' >> $(LTXDIR)/$(TEX)
-	echo '\\begin{document}' >> $(LTXDIR)/$(TEX)
-	echo '\\maketitle' >> $(LTXDIR)/$(TEX)
-	echo '' >> $(LTXDIR)/$(TEX)
-	echo '\\end{document}' >> $(LTXDIR)/$(TEX)
+init: | $(ROOT) $(BINROOT)
+	@$(ECHO) "Creating the .gitignore..."
+	@$(ECHO) "$(OBJDIR)\n$(FINALDIR)\n$(TXTDIR)\n$(BINDIR)\n$(TSTDIR)\n.git" > .gitignore
+	@$(ECHO) "Finished"
 
 .PHONY: clean
 clean:
-	$(RM) $(OBJDIR)/*.o
-	$(RM) $(LTXDIR)/*.dvi
-	$(RM) $(LTXDIR)/*.aux
-	$(RM) $(LTXDIR)/*.log
-
-.PHONY: latex
-latex:
-	pdflatex $(LTXDIR)/$(TEX)
+	@$(RMDIR) $(OBJDIR)
+	@$(RMDIR) $(TSTDIR)
+	@$(RM) $(LTXDIR)/*.dvi $(LTXDIR)/*.aux $(LTXDIR)/*.log
 
 .PHONY: organize
 organize:
-	-$(MV) *.o $(OBJDIR)
-	-$(MV) *.c $(SRCDIR)
-	-$(MV) *.h $(INCDIR)
-	-$(MV) *.txt $(TXTDIR)
-	-$(MV) *.dvi $(LTXDIR)
-	-$(MV) *.aux $(LTXDIR)
-	-$(MV) *.tex $(LTXDIR)
-	-$(MV) *.pdf $(LTXDIR)
-	-$(MV) *.log $(LTXDIR)
+	@$(MV) *.o $(OBJDIR)
+	@$(MV) *.c $(SRCDIR)
+	@$(MV) *.h $(INCDIR)
+	@$(MV) *.txt $(TXTDIR)
 
-.PHONY: tar
-tar: | $(FINALDIR)
-	$(CP) $(SRCDIR) $(FINALDIR)
-	$(CP) $(LTXDIR) $(FINALDIR)
-	$(RM) $(FINALDIR)/$(LTXDIR)/*.dvi
-	$(RM) $(FINALDIR)/$(LTXDIR)/*.aux
-	$(RM) $(FINALDIR)/$(LTXDIR)/*.log
-	$(RM) $(FINALDIR)/$(LTXDIR)/*.tex
-	$(CP) $(INCDIR) $(FINALDIR)
-	$(CP) Makefile $(FINALDIR)
-	$(TAR) $(TARF).tar $(FINALDIR)
-
-.PHONY: upload
-	git add --all
-	git commit -m "Upload all the files"
-	git push origin master
+.PHONY: package
+package: clean | $(FINALDIR)
+	
+	@$(ECHO) "Copying files..."
+	@$(CP) $(SRCDIR) $(FINALDIR)
+	@$(CP) $(INCDIR) $(FINALDIR)
+	@$(CP) $(LTXDIR) $(FINALDIR)
+	@$(CP) Makefile $(FINALDIR)
+	
+	@$(ECHO) "Compressing..."
+	@$(TAR) $(TARF).tar.gz $(FINALDIR)
+	
+	@$(ECHO) "Cleaning..."
+	@$(RMDIR) $(FINALDIR)
